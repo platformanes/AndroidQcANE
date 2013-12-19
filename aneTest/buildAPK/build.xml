@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project default="package-android-apk-release" name="Air Native Extension Build Scripts">
+    <!-- Config -->
+    <property file="build.config" />
+    <property name="temp" value="../temp" />
+    <property name="pack" value="../temp/pack" />
+
+    <target name="package-android-apk-debug">
+        <delete dir="${temp}" />
+        <copy file="../bin-debug/${app.name}.swf" todir="${temp}" />
+        <copy file="../bin-debug/${app.name}-app.xml" todir="${temp}" />
+        <antcall target="package-android-apk"></antcall>
+    </target>
+
+    <target name="package-android-apk-release">
+        <delete dir="${temp}" />
+        <copy file="../bin-release-temp/${app.name}.swf" todir="${temp}" />
+        <copy file="../bin-release-temp/${app.name}-app.xml" todir="${temp}" />
+        <antcall target="package-android-apk"></antcall>
+    </target>
+
+    <!-- 调用adt打包apk -->
+    <target name="package-android-apk">
+        <delete dir="../apk" />
+
+        <!-- 复制ane -->
+        <copy todir="${temp}">
+            <fileset dir="../anes" />
+        </copy>
+
+        <copy todir="${temp}/assets">
+            <fileset dir="../assets" />
+        </copy>
+        <copy todir="${temp}/assets/assets">
+            <fileset dir="../src/assets" />
+        </copy>
+
+        <mkdir dir="${pack}" />
+        <java dir="../temp" failonerror="true" fork="true" jar="${flex.adt}">
+            <arg value="-package" />
+            <arg line="-target apk" />
+            <arg line="-storetype pkcs12" />
+            <arg line="-keystore ../build/${app.p12}" />
+            <arg line="-storepass ${app.pwd}" />
+            <arg value="pack/${app.name}.apk" />
+            <arg value="${app.name}-app.xml" />
+            <arg value="${app.name}.swf" />
+            <!-- <arg value="assets"/> -->
+            <!-- <arg value="../src/assets"/> -->
+            <arg line="-C assets ." />
+            <arg line="-extdir ." />
+        </java>
+
+        <copy todir="${pack}/resources">
+            <fileset dir="../resources" />
+        </copy>
+
+        <exec executable="${winrar}" dir="${pack}" failonerror="true">
+            <arg value="a" />
+            <arg value="${app.name}.apk" />
+            <arg value="resources" />
+        </exec>
+
+        <exec executable="${winrar}" dir="${pack}" failonerror="true">
+            <arg value="d" />
+            <arg value="${app.name}.apk" />
+            <arg value="META-INF" />
+        </exec>
+        <copy file="${pack}/${app.name}.apk" todir="../apk" />
+
+        <!-- <delete includeEmptyDirs="true" dir="${pack}" excludes="${app.name}.apk"/>  -->
+
+        <exec executable="jarsigner" failonerror="true">
+            <!-- <arg value="-verbose"/> -->
+            <!-- <arg value="-verify"/> -->
+            <arg line="-sigalg MD5withRSA" />
+            <arg line="-digestalg SHA1" />
+            <arg line="-keystore ${app.keystore}" />
+            <arg line="-storepass 123456" />
+            <arg line="-keypass 123456" />
+            <arg line="-signedjar ../apk/${app.name}-sign.apk ${pack}/${app.name}.apk 别名" />
+        </exec>
+
+        <exec executable="${android.tools}/zipalign.exe" dir="../apk" failonerror="true">
+            <!-- <arg value="-v" /> -->
+            <arg value="-f" />
+            <arg value="4" />
+            <arg value="${app.name}-sign.apk" />
+            <arg value="${app.name}-align.apk" />
+        </exec>
+
+
+        <delete dir="${temp}" />
+        <!-- <signjar verbose="true" jar="${pack}/${app.name}.apk" signedjar="../apk/${app.name}.apk" keystore="${app.keystore}" storepass="123456" keypass="123456" alias="com.qianchiAne" /> -->
+    </target>
+
+    <target name="test">
+
+
+        <!--  <exec executable="jarsigner.exe" failonerror="true">
+            <arg value="-verbose"/>
+            <arg value="-verify"/>
+            <arg line="-storetype pkcs12"/>
+            <arg line="-keystore ${app.p12}"/>
+            <arg line="-storepass 123456"/>
+            <arg line="-signedjar ../apk/${app.name}-sign.apk"/>
+            <arg value="${pack}/${app.name}.apk"/>
+            <arg value="1"/>
+        </exec> -->
+        <!-- <signjar verbose="true" jar="${pack}/${app.name}.apk" signedjar="../apk/${app.name}.apk" keystore="${app.keystore}" storepass="123456" keypass="123456" alias="com.qianchiAne" /> -->
+
+        <!-- <signjar jar="${pack}/${app.name}.apk" signedjar="../apk/${app.name}.apk" keystore="${app.keystore}" storepass="123456" alias="${app.keystore}" /> -->
+    </target>
+
+
+</project>
