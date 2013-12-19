@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="android-ane" name="Air Native Extension Build Scripts">
+    <!-- Config -->
+    <property file="build.config"/>
+       <!-- Package Android only extension -->
+    <target depends="android,swc-mobile,package-android-ane" description="Build Android only extension" name="android-ane">
+        <delete dir="../temp"/>
+    </target>
+    
+    <!-- Android -->
+    <target description="Build Android Library" name="android">
+        <delete dir="../android/temp"/>
+        <delete dir="../ane"/>
+        <delete dir="../temp"/>
+        <!-- <mkdir dir="../android/temp/classes"/> -->
+        <echo message="Using Java version ${ant.java.version}."/>
+        <!-- 不用javac编译 用ADT编译的bin目录下的jar -->
+        <!-- <javac source="1.7" srcdir="../android/src" destdir="../android/temp/classes" includeantruntime="false" target="1.7" encoding="UTF-8"><classpath><pathelement location="${android.platform}/android.jar"/><pathelement location="${flex.sdk}/lib/android/FlashRuntimeExtensions.jar"/><pathelement location="${android.extras}/v4/android-support-v4.jar"/><pathelement location="${android.tools}/support/annotations.jar"/></classpath></javac>-->
+        <!-- <mkdir dir="../android/temp/zip"/><unzip src="../android/libs/android-support-v4.jar" dest="../android/temp/zip"/><unzip src="../android/libs/annotations.jar" dest="../android/temp/zip"/><copydir src="../android/temp/zip/android" dest="../android/temp/classes/android"/>-->
+        <mkdir dir="../temp/android/"/>
+        <!-- <jar basedir="../android/temp/classes" destfile="../temp/android/${name}.jar"/>-->
+        <copy todir="../temp/android/res">
+            <fileset dir="../android/res"/>
+        </copy>
+        <!-- <copy todir="../temp/android/resources">
+        	<fileset dir="../android/resources"/>
+    	</copy> -->
+
+    
+        <!-- <delete dir="../android/temp"/> -->
+        <!-- 复制jar -->
+        <copy file="../android/bin/qcane.jar" overwrite="true" tofile="../temp/android/lib${name}.jar"/>
+
+		<!-- 和sdk打包一起 -->
+        <jar destfile="../temp/android/${name}.jar">  
+            <zipfileset src="../android/libs/QC_SDK.jar"/>   
+            <zipfileset src="../android/libs/android-support-v4.jar"/>   
+            <zipfileset src="../temp/android/lib${name}.jar"/>
+        </jar>
+
+        <delete file="../temp/android/lib${name}.jar"/>
+    </target>
+    <!-- Actionscript mobile -->
+    <target description="Build SWC library" name="swc-mobile">
+        <mkdir dir="../temp/swc/content/"/>
+        <fileset casesensitive="yes" dir="../actionscript/mobile/src" id="classfiles">
+            <include name="**/*.as"/>
+        </fileset>
+        <pathconvert dirsep="." pathsep=" " property="classlist" refid="classfiles">
+            <regexpmapper from=".*src.(.*)\.as" to="\1"/>
+        </pathconvert>
+        <echo>${basedir}</echo>
+        <!-- 不用compc来编译 还是用ide编译的swc -->
+        <!-- <java jar="${flex.sdk}/lib/compc.jar" failonerror="true" fork="true" dir="${flex.sdk}/frameworks"><env key="AIR_SDK_HOME" value="${flex.sdk}"/><arg line='-source-path ${basedir}/../actionscript/mobile/src'/><arg line='-output ${basedir}/../temp/swc/${name}.swc'/><arg line='-swf-version=14'/><arg line='-external-library-path+="${flex.sdk}/frameworks/libs/air/airglobal.swc"'/><arg line='-include-classes ${classlist}'/></java>-->
+        <copy file="../actionscript/mobile/bin/mobile.swc" overwrite="true" tofile="../temp/swc/${name}.swc"/>
+        <!-- 解压swc -->
+        <unzip dest="../temp/swc/content" overwrite="true" src="../temp/swc/${name}.swc"/>
+      <!--   <copy file="../temp/swc/content/library.swf" overwrite="true" todir="../temp/ios"/>
+        <copy file="../temp/swc/content/library.swf" overwrite="true" todir="../temp/ios-simulator"/> -->
+        <copy file="../temp/swc/content/library.swf" overwrite="true" todir="../temp/android"/>
+        <copy file="../temp/swc/content/catalog.xml" todir="../temp/android" overwrite="true"/>
+        <!--  <copy file="../temp/swc/${name}.swc" todir="../temp/android" overwrite="true"/>-->
+        <!-- <delete dir="../temp/swc/content/"/>-->
+    </target>
+    
+    <!-- Package the extension package only for Android -->
+    <target description="Create the Android only extension package" name="package-android-ane">
+        <!-- 调用adt打包ane -->
+        <java dir="../temp" failonerror="true" fork="true" jar="${flex.adt}">
+            <arg value="-package"/>
+            <!-- <arg line="-storetype PKCS12 -keystore 1.p12 -storepass 1"/>-->
+            <arg value="-target"/>
+            <arg value="ane"/>
+            <arg value="${name}.ane"/>
+            <arg value="../build/android/extension.xml"/>
+            <arg line="-swc swc/${name}.swc"/>
+            <arg line="-platform Android-ARM -C android/ ."/>
+            <!-- <arg line="-platform default -C default/ ."/>-->
+        </java>
+        <!-- <exec executable ="cmd"><arg line="/c adt.bat"/></exec>-->
+        <move file="../temp/${name}.ane" todir="../ane"/>
+        <!-- <copy file="../bin/${name}.ane" todir="../sample/ane"/> -->
+        <!-- <copy file="../bin/${name}.ane" todir="../app/ane" overwrite="true"/> -->
+        <!--
+        <delete dir="../temp"/>-->
+    </target>
+
+</project>
