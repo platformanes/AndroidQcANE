@@ -23,4 +23,4 @@
 ## 作者
 
 * [platformANEs](https://github.com/platformanes)由 [zrong](http://zengrong.net) 和 [rect](http://www.shadowkong.com/) 共同发起并完成。
-* 此ANE由[sxd](https://github.com/platformanes) 分享,让我们感谢他.
+* 此ANE由[sxd](https://github.com/sxd1140) 分享,让我们感谢他.
